@@ -494,7 +494,7 @@
         if ((STRING_OPEN[s]+f) % 12 === targetSemitone){
           var abs = STRING_OPEN[s]+f;
           var ok = direction==='up' ? abs>lastAbs : direction==='down' ? abs<lastAbs : true;
-          if (ok) candidates.push({string:s, fret:f, dist:Math.abs(f-lastPos.fret)});
+          if (ok) candidates.push({string:s, fret:f, dist:Math.abs(abs-lastAbs)});
         }
       }
     }
@@ -541,11 +541,13 @@
       var positions = fbGenerate(seq, s);
       results.push({startString:s, positions:positions, score:fbScore(positions)});
     }
-    results.sort(function(a,b){
+    var complete = results.filter(function(r){ return r.score.nullCount===0; });
+    var pool = complete.length>0 ? complete : results;
+    pool.sort(function(a,b){
       if (a.score.nullCount!==b.score.nullCount) return a.score.nullCount-b.score.nullCount;
       return a.score.span-b.score.span;
     });
-    return results;
+    return pool;
   }
 
   function buildFretSequence(approach, main){
@@ -1316,7 +1318,13 @@
           positions: existing.positions.map(function(p){ return p ? {string:p.string, fret:p.fret} : null; }),
           score: fbScore(existing.positions)
         };
-        results = [savedEntry].concat(autoResults);
+        var combined = [savedEntry].concat(autoResults);
+        var completeCombined = combined.filter(function(r){ return r.score.nullCount===0; });
+        results = completeCombined.length>0 ? completeCombined : combined;
+        results.sort(function(a,b){
+          if (a.score.nullCount!==b.score.nullCount) return a.score.nullCount-b.score.nullCount;
+          return a.score.span-b.score.span;
+        });
         existingName = existing.name;
       }
     }
