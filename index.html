@@ -65,6 +65,8 @@
     color:var(--ink-soft);cursor:pointer;flex:none;
   }
   .icon-btn.active{background:var(--accent-soft);color:var(--accent);}
+  #sort-order-toggle svg{transition:transform .15s ease;}
+  #sort-order-toggle.desc svg{transform:rotate(180deg);}
 
   /* ---------- Category panel ---------- */
   .category-panel{
@@ -374,6 +376,9 @@
     <div id="home-view">
       <div class="filter-row">
         <select class="input" id="category-filter-select"></select>
+        <button class="icon-btn" id="sort-order-toggle" title="番号の昇順">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+        </button>
         <button class="icon-btn" id="category-panel-toggle" title="カテゴリを編集">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
         </button>
@@ -639,7 +644,8 @@
     linksSubView: 'list',    // 'list' | 'create' | 'detail'
     linksActiveId: null,     // 表示中の連結id
     linksDraft: null,        // 作成・編集中の作業コピー {id, name, phraseIds}
-    linksDetailExpanded: null // 詳細画面で開いているフレーズのindex
+    linksDetailExpanded: null, // 詳細画面で開いているフレーズのindex
+    sortOrder: 'asc'          // 'asc' | 'desc'（フレーズ番号順）
   };
   var pickerTarget = null; // {group:'main'|'approach', index:0-3}
 
@@ -884,7 +890,8 @@
     var list = ui.filterCategory==='ALL'
       ? state.phrases.slice()
       : state.phrases.filter(function(p){ return p.category===ui.filterCategory; });
-    return list.sort(function(a,b){ return b.createdAt - a.createdAt; });
+    var dir = (ui.sortOrder==='desc') ? -1 : 1;
+    return list.sort(function(a,b){ return (a.createdAt - b.createdAt) * dir; });
   }
 
   function renderHeaderCount(){
@@ -912,6 +919,13 @@
   document.getElementById('category-filter-select').addEventListener('change', function(e){
     ui.filterCategory = e.target.value;
     renderHeaderCount();
+    renderPhraseList();
+  });
+
+  document.getElementById('sort-order-toggle').addEventListener('click', function(){
+    ui.sortOrder = (ui.sortOrder==='asc') ? 'desc' : 'asc';
+    this.classList.toggle('desc', ui.sortOrder==='desc');
+    this.title = (ui.sortOrder==='asc') ? '番号の昇順' : '番号の降順';
     renderPhraseList();
   });
 
